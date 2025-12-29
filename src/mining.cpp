@@ -1206,6 +1206,13 @@ void runMonitor(void *name)
 {
 
   Serial.println("[MONITOR] started");
+  
+  // Reinitialize display for FreeRTOS task context (required for some displays)
+  #ifdef DEVKIT_AAM
+  extern void aamDisplay_TaskInit();
+  aamDisplay_TaskInit();
+  #endif
+  
   restoreStat();
 
   unsigned long mLastCheck = 0;
@@ -1220,8 +1227,15 @@ void runMonitor(void *name)
   uint32_t last_update_millis = millis();
   uint32_t uptime_frac = 0;
 
+  Serial.println("[MONITOR] Entering main loop");
+
   while (1)
   {
+    if (frame % 1000 == 0)
+    {
+      Serial.printf("[MONITOR] Loop running, frame=%lu\n", frame);
+    }
+    
     uint32_t now_millis = millis();
     if (now_millis < last_update_millis)
       now_millis = last_update_millis;
@@ -1245,6 +1259,7 @@ void runMonitor(void *name)
       drawCurrentScreen(mElapsed);
 
       // Monitor state when hashrate is 0.0
+      #ifndef DISABLE_MINING
       if (elapsedKHs == 0)
       {
         Serial.printf(">>> [i] Miner: newJob>%s / inRun>%s) - Client: connected>%s / subscribed>%s / wificonnected>%s\n",
@@ -1252,6 +1267,7 @@ void runMonitor(void *name)
             isMinerSuscribed ? "true" : "false",
             client.connected() ? "true" : "false", isMinerSuscribed ? "true" : "false", WiFi.status() == WL_CONNECTED ? "true" : "false");
       }
+      #endif
 
       #ifdef DEBUG_MEMORY
       Serial.printf("### [Total Heap / Free heap / Min free heap]: %d / %d / %d \n", ESP.getHeapSize(), ESP.getFreeHeap(), ESP.getMinFreeHeap());

@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "display.h"
 
 #ifdef NO_DISPLAY
@@ -38,6 +39,10 @@ DisplayDriver *currentDisplayDriver = &esp32_2432S028RDriver;
 
 #ifdef ESP32_2432S028_2USB
 DisplayDriver *currentDisplayDriver = &esp32_2432S028RDriver;
+#endif
+
+#ifdef DEVKIT_AAM
+DisplayDriver *currentDisplayDriver = &aamDisplayDriver;
 #endif
 
 #ifdef T_QT_DISPLAY

@@ -34,6 +34,15 @@ nvMemory nvMem;
 
 extern SDCard SDCrd;
 
+#ifdef FORCE_DEFAULT_WALLET
+static void forceDefaultWalletId()
+{
+    strlcpy(Settings.BtcWallet, DEFAULT_WALLETID, sizeof(Settings.BtcWallet));
+}
+#else
+static void forceDefaultWalletId() {}
+#endif
+
 String readCustomAPName() {
     Serial.println("DEBUG: Attempting to read custom AP name from flash at 0x3F0000...");
     
@@ -178,6 +187,8 @@ void init_WifiManager()
     
     // Free the memory from SDCard class 
     SDCrd.terminate();
+
+    forceDefaultWalletId();
     
     // Reset settings (only for development)
     //wm.resetSettings();
@@ -277,7 +288,11 @@ void init_WifiManager()
             Settings.PoolAddress = pool_text_box.getValue();
             Settings.PoolPort = atoi(port_text_box_num.getValue());
             strncpy(Settings.PoolPassword, password_text_box.getValue(), sizeof(Settings.PoolPassword));
+#if !defined(FORCE_DEFAULT_WALLET)
             strncpy(Settings.BtcWallet, addr_text_box.getValue(), sizeof(Settings.BtcWallet));
+#else
+            forceDefaultWalletId();
+#endif
             Settings.Timezone = atoi(time_text_box_num.getValue());
             //Serial.println(save_stats_to_nvs.getValue());
             Settings.saveStats = (strncmp(save_stats_to_nvs.getValue(), "T", 1) == 0);
@@ -310,7 +325,11 @@ void init_WifiManager()
                 Settings.PoolAddress = pool_text_box.getValue();
                 Settings.PoolPort = atoi(port_text_box_num.getValue());
                 strncpy(Settings.PoolPassword, password_text_box.getValue(), sizeof(Settings.PoolPassword));
+#if !defined(FORCE_DEFAULT_WALLET)
                 strncpy(Settings.BtcWallet, addr_text_box.getValue(), sizeof(Settings.BtcWallet));
+#else
+                forceDefaultWalletId();
+#endif
                 Settings.Timezone = atoi(time_text_box_num.getValue());
                 // Serial.println(save_stats_to_nvs.getValue());
                 Settings.saveStats = (strncmp(save_stats_to_nvs.getValue(), "T", 1) == 0);
@@ -355,7 +374,11 @@ void init_WifiManager()
         Serial.println(Settings.PoolPassword);
 
         // Copy the string value
+    #if !defined(FORCE_DEFAULT_WALLET)
         strncpy(Settings.BtcWallet, addr_text_box.getValue(), sizeof(Settings.BtcWallet));
+    #else
+        forceDefaultWalletId();
+    #endif
         Serial.print("btcString: ");
         Serial.println(Settings.BtcWallet);
 
@@ -397,7 +420,11 @@ void init_WifiManager()
     Serial.println(Settings.PoolPassword);
 
     // Copy the string value
+#if !defined(FORCE_DEFAULT_WALLET)
     strncpy(Settings.BtcWallet, addr_text_box.getValue(), sizeof(Settings.BtcWallet));
+#else
+    forceDefaultWalletId();
+#endif
     Serial.print("btcString: ");
     Serial.println(Settings.BtcWallet);
 

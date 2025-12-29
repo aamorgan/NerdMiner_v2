@@ -139,6 +139,7 @@ void setup()
   #endif
 
   /******** CREATE STRATUM TASK *****/
+  #ifndef DISABLE_MINING
   static const char stratum_name[] = "(Stratum)";
  #if defined(CONFIG_IDF_TARGET_ESP32) && !defined(ESP32_2432S028R) && !defined(ESP32_2432S028_2USB)
   // Reduced stack for ESP32 classic to save memory
@@ -149,6 +150,9 @@ void setup()
  #else
   BaseType_t res2 = xTaskCreatePinnedToCore(runStratumWorker, "Stratum", 15000, (void*)stratum_name, 4, NULL,1);
  #endif
+  #else
+  Serial.println("[MAIN] Stratum worker DISABLED by DISABLE_MINING flag");
+  #endif
 
   /******** CREATE MINER TASKS *****/
   //for (size_t i = 0; i < THREADS; i++) {
@@ -158,6 +162,7 @@ void setup()
   // Start mining tasks
   //BaseType_t res = xTaskCreate(runWorker, name, 35000, (void*)name, 1, NULL);
   TaskHandle_t minerTask1, minerTask2 = NULL;
+  #ifndef DISABLE_MINING
   #ifdef HARDWARE_SHA265
     #if defined(CONFIG_IDF_TARGET_ESP32)
     xTaskCreate(minerWorkerHw, "MinerHw-0", 3584, (void*)0, 3, &minerTask1); // Reduced for ESP32 classic
@@ -182,6 +187,9 @@ void setup()
   #endif
   esp_task_wdt_add(minerTask2);
 #endif
+  #else
+  Serial.println("[MAIN] Mining DISABLED by DISABLE_MINING flag");
+  #endif
 
   vTaskPrioritySet(NULL, 4);
 

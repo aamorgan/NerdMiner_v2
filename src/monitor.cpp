@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include "mbedtls/md.h"
 #include "HTTPClient.h"
 #include <NTPClient.h>
@@ -63,10 +64,12 @@ void updateGlobalData(void){
         if (WiFi.status() != WL_CONNECTED) return;
             
         //Make first API call to get global hash and current difficulty
+        WiFiClientSecure client;
+        client.setInsecure();
         HTTPClient http;
         http.setTimeout(10000);
         try {
-        http.begin(getGlobalHash);
+        http.begin(client, getGlobalHash);
         int httpCode = http.GET();
 
         if (httpCode == HTTP_CODE_OK) {
@@ -91,7 +94,7 @@ void updateGlobalData(void){
 
       
         //Make third API call to get fees
-        http.begin(getFees);
+        http.begin(client, getFees);
         httpCode = http.GET();
 
         if (httpCode == HTTP_CODE_OK) {
@@ -128,10 +131,12 @@ String getBlockHeight(void){
     
         if (WiFi.status() != WL_CONNECTED) return current_block;
             
+        WiFiClientSecure client;
+        client.setInsecure();
         HTTPClient http;
         http.setTimeout(10000);
         try {
-        http.begin(getHeightAPI);
+        http.begin(client, getHeightAPI);
         int httpCode = http.GET();
 
         if (httpCode == HTTP_CODE_OK) {
@@ -164,12 +169,14 @@ String getBTCprice(void){
             return String(price_buffer);
         }
         
+        WiFiClientSecure client;
+        client.setInsecure();
         HTTPClient http;
         http.setTimeout(10000);
         bool priceUpdated = false;
 
         try {
-        http.begin(getBTCAPI);
+        http.begin(client, getBTCAPI);
         int httpCode = http.GET();
 
         if (httpCode == HTTP_CODE_OK) {
@@ -441,6 +448,8 @@ pool_data getPoolData(void){
     if((mPoolUpdate == 0) || (millis() - mPoolUpdate > UPDATE_POOL_min * 60 * 1000)){      
         if (WiFi.status() != WL_CONNECTED) return pData;            
         //Make first API call to get global hash and current difficulty
+        WiFiClientSecure client;
+        client.setInsecure();
         HTTPClient http;
         http.setTimeout(10000);        
         try {          
@@ -449,9 +458,9 @@ pool_data getPoolData(void){
           if (btcWallet.indexOf(".")>0) btcWallet = btcWallet.substring(0,btcWallet.indexOf("."));
 #ifdef SCREEN_WORKERS_ENABLE
           Serial.println("Pool API : " + poolAPIUrl+btcWallet);
-          http.begin(poolAPIUrl+btcWallet);
+          http.begin(client, poolAPIUrl+btcWallet);
 #else
-          http.begin(String(getPublicPool)+btcWallet);
+          http.begin(client, String(getPublicPool)+btcWallet);
 #endif
           int httpCode = http.GET();
           if (httpCode == HTTP_CODE_OK) {

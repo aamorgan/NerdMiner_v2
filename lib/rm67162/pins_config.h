@@ -3,9 +3,17 @@
 /***********************config*************************/
 #define LCD_USB_QSPI_DREVER 1
 
+#ifndef SPI_FREQUENCY
 #define SPI_FREQUENCY 75000000
+#endif
+
+#ifndef TFT_SPI_MODE
 #define TFT_SPI_MODE SPI_MODE0
+#endif
+
+#ifndef TFT_SPI_HOST
 #define TFT_SPI_HOST SPI2_HOST
+#endif
 
 #define EXAMPLE_LCD_H_RES 536
 #define EXAMPLE_LCD_V_RES 240
@@ -13,18 +21,45 @@
 
 /***********************config*************************/
 
+#ifndef TFT_WIDTH
 #define TFT_WIDTH 240
+#endif
+
+#ifndef TFT_HEIGHT
 #define TFT_HEIGHT 536
+#endif
+
+#ifndef SEND_BUF_SIZE
 #define SEND_BUF_SIZE (0x4000) //(LCD_WIDTH * LCD_HEIGHT + 8) / 10
+#endif
 
+#ifndef TFT_TE
 #define TFT_TE 9
-#define TFT_SDO 8
+#endif
 
+#ifndef TFT_SDO
+#define TFT_SDO 8
+#endif
+
+#ifndef TFT_DC
 #define TFT_DC 7
+#endif
+
+#ifndef TFT_RES
 #define TFT_RES 17
+#endif
+
+#ifndef TFT_CS
 #define TFT_CS 6
+#endif
+
+#ifndef TFT_MOSI
 #define TFT_MOSI 18
+#endif
+
+#ifndef TFT_SCK
 #define TFT_SCK 47
+#endif
 
 #define TFT_QSPI_CS 6
 #define TFT_QSPI_SCK 47

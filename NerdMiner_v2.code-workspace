@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../SPI_TouchDisplay"
+		},
+		{
+			"path": "../NerdMiner_v2_Custom"
+		}
+	],
+	"settings": {}
+}

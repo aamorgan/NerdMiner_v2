@@ -39,7 +39,7 @@
 //
 //      tft.setFreeFont(NULL); // Set font to GLCD
 
-#define LOAD_GFXFF
+// LOAD_GFXFF is defined via build flags in platformio.ini
 
 #ifdef LOAD_GFXFF // Only include the fonts if LOAD_GFXFF is defined in User_Setup.h
 
