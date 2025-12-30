@@ -99,7 +99,7 @@ bool SDCard::loadConfigFile(TSettings* Settings)
             if (configFile)
             {
                 cardBusy_ = true;
-                StaticJsonDocument<512> json;
+                StaticJsonDocument<1024> json;
                 DeserializationError error = deserializeJson(json, configFile);
                 configFile.close();
                 cardBusy_ = false;
@@ -133,6 +133,10 @@ bool SDCard::loadConfigFile(TSettings* Settings)
                     } else {
                         Settings->Brightness = 250;
                     }
+                    if (json.containsKey(JSON_KEY_REMOTEMINERURL)) {
+                        Settings->RemoteMinerURL = json[JSON_KEY_REMOTEMINERURL].as<String>();
+                    }
+
                     // Serial.printf("Carteira Lida SD:%s\n", Settings.BtcWallet);       
                     Serial.printf("Carteira Lida SDs:%s\n", Settings->BtcWallet);                       
                     return true;

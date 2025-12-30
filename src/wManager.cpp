@@ -170,20 +170,26 @@ void init_WifiManager()
     // Explicitly set WiFi mode
     WiFi.mode(WIFI_STA);
 
-    if (!nvMem.loadConfig(&Settings))
+    // 1. Attempt to read SD Card first
+    if (SDCrd.loadConfigFile(&Settings))
     {
-        //No config file on internal flash.
-        if (SDCrd.loadConfigFile(&Settings))
-        {
-            //Config file on SD card.
-            SDCrd.SD2nvMemory(&nvMem, &Settings); // reboot on success.          
-        }
-        else
-        {
-            //No config file on SD card. Starting wifi config server.
-            forceConfig = true;
-        }
-    };
+        // Config file on SD card found.
+        Serial.println("Config loaded from SD Card.");
+        // Program SPIFFS flash with those settings
+        nvMem.saveConfig(&Settings);
+    }
+    // 2. If SD card fails, fall back to SPIFFS
+    else if (nvMem.loadConfig(&Settings))
+    {
+        // Config loaded from SPIFFS
+        Serial.println("Config loaded from SPIFFS.");
+    }
+    // 3. If that fails, hardcoded defaults (already in Settings constructor)
+    else
+    {
+        Serial.println("No config found. Using hardcoded defaults.");
+        // forceConfig = true; // User requested hardcoded defaults, so we don't force config portal
+    }
     
     // Free the memory from SDCard class 
     SDCrd.terminate();

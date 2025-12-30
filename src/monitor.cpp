@@ -45,8 +45,8 @@ void setup_monitor(void){
     timeClient.begin();
     
     // Adjust offset depending on your zone
-    // GMT +2 in seconds (zona horaria de Europa Central)
-    timeClient.setTimeOffset(3600 * Settings.Timezone);
+    // GMT -5 in seconds (EST)
+    timeClient.setTimeOffset(3600 * -5);
 
     Serial.println("TimeClient setup done");
 #ifdef SCREEN_WORKERS_ENABLE
@@ -120,6 +120,7 @@ void updateGlobalData(void){
           Serial.println("Global data HTTP error caught");
           http.end();
         }
+        mGlobalUpdate = millis();
     }
 }
 
@@ -152,6 +153,7 @@ String getBlockHeight(void){
           Serial.println("Height HTTP error caught");
           http.end();
         }
+        mHeightUpdate = millis();
     }
   
   return current_block;
@@ -198,6 +200,7 @@ String getBTCprice(void){
         } catch(...) {
           Serial.println("BTC price HTTP error caught");
           http.end();
+        mBTCUpdate = millis();
         }
     }  
   
@@ -400,7 +403,7 @@ coin_data getCoinData(unsigned long mElapsed)
   data.minimumFee = String(gData.minimumFee);
 #endif
   data.halfHourFee = String(gData.halfHourFee) + " sat/vB";
-  data.netwrokDifficulty = gData.difficulty;
+  data.networkDifficulty = gData.difficulty;
   data.globalHashRate = gData.globalHash;
   data.blockHeight = getBlockHeight();
 
@@ -521,4 +524,90 @@ pool_data getPoolData(void){
         } 
     }
     return pData;
+}
+
+remote_data getRemoteMinerData(void) {
+    static remote_data data;
+    static unsigned long lastUpdate = 0;
+    
+    // Update every 5 seconds
+    if (millis() - lastUpdate < 5000 && lastUpdate != 0) {
+        return data;
+    }
+    
+    // Update timestamp immediately to prevent rapid retries
+    lastUpdate = millis();
+    
+    data.connected = false;
+    
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("[Remote] WiFi not connected");
+        return data;
+    }
+    
+    WiFiClient client;
+    HTTPClient http;
+    http.setTimeout(1000);
+    
+    String url = Settings.RemoteMinerURL;
+    if (url == "") {
+        Serial.println("[Remote] URL is empty");
+        return data;
+    }
+
+    // Append /data if not present (assuming user enters base URL)
+    if (!url.endsWith("/data")) {
+        if (url.endsWith("/")) url += "data";
+        else url += "/data";
+    }
+    
+    Serial.println("[Remote] Fetching: " + url);
+    http.begin(client, url);
+    int httpCode = http.GET();
+    
+    if (httpCode == HTTP_CODE_OK) {
+        String payload = http.getString();
+        Serial.println("[Remote] Payload: " + payload);
+        
+        StaticJsonDocument<1024> doc;
+        DeserializationError error = deserializeJson(doc, payload);
+        
+        if (!error) {
+            data.connected = true;
+            
+            // Board type
+            if (doc.containsKey("boardtype")) data.board = doc["boardtype"].as<String>();
+            else if (doc.containsKey("board")) data.board = doc["board"].as<String>();
+            
+            // Hashrate: remove units and round up
+            String hr = doc["hashRate"].as<String>();
+            String numStr = "";
+            for(unsigned int i=0; i<hr.length(); i++) {
+                if (isdigit(hr[i]) || hr[i] == '.') numStr += hr[i];
+                else break;
+            }
+            if (numStr.length() > 0) data.hashRate = String((int)ceil(numStr.toFloat()));
+            else data.hashRate = hr;
+
+            // Shares: extract valid shares (before /)
+            String sh = doc["shares"].as<String>();
+            int slashIdx = sh.indexOf('/');
+            if (slashIdx > 0) data.shares = sh.substring(0, slashIdx);
+            else data.shares = sh;
+
+            data.bestDiff = doc["bestDiff"].as<String>();
+            data.valid = doc["valid"].as<String>();
+            data.rssi = doc["rssi"].as<String>();
+            data.timeMining = doc["timeMining"].as<String>();
+            data.netDiff = doc["netDiff"].as<String>();
+        } else {
+            Serial.print("[Remote] JSON Error: ");
+            Serial.println(error.c_str());
+        }
+    } else {
+        Serial.print("[Remote] HTTP Error: ");
+        Serial.println(httpCode);
+    }
+    http.end();
+    return data;
 }

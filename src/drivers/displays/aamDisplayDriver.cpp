@@ -13,11 +13,14 @@
 #include "media/myFonts.h"
 #include "aamDisplayData.h"
 #include "monitor.h"
+#include "drivers/storage/storage.h"
 
 // Global objects
 TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite background = TFT_eSprite(&tft);
 OpenFontRender render;
+
+extern TSettings Settings;
 
 // Test function - can be called to verify display works from a given context
 void testPostSplashDraw() {
@@ -39,12 +42,13 @@ void testPostSplashDraw() {
 #define SCREEN_CLOCK    1
 #define SCREEN_GLOBAL   2
 #define SCREEN_BTCPRICE 3
-#define NUM_SCREENS     4
+#define SCREEN_REMOTE   4
+#define NUM_SCREENS     5
 
 // State variables
 int currentScreen = SCREEN_MINING;
 unsigned long lastScreenChange = 0;
-const unsigned long SCREEN_CYCLE_TIME = 5000; // 5 seconds per screen
+const unsigned long SCREEN_CYCLE_TIME = 10000; // 10 seconds per screen
 bool hasChangedScreen = true;
 
 // Touch calibration file
@@ -57,6 +61,7 @@ void drawMiningScreen(unsigned long mElapsed);
 void drawClockScreen(unsigned long mElapsed);
 void drawGlobalScreen(unsigned long mElapsed);
 void drawBTCPriceScreen(unsigned long mElapsed);
+void drawRemoteScreen(unsigned long mElapsed);
 void printPoolData();
 bool createBackgroundSprite(int16_t wdt, int16_t hgt);
 
@@ -97,11 +102,25 @@ static void updateDisplayData(unsigned long mElapsed)
   displayData.clock.btcPrice = cData.btcPrice;
   displayData.clock.currentTime = cData.currentTime;
 
+  // Remote screen data
+  if (currentScreen == SCREEN_REMOTE) {
+    remote_data rData = getRemoteMinerData();
+    displayData.remote.board = rData.board;
+    displayData.remote.hashRate = rData.hashRate;
+    displayData.remote.shares = rData.shares;
+    displayData.remote.bestDiff = rData.bestDiff;
+    displayData.remote.valid = rData.valid;
+    displayData.remote.rssi = rData.rssi;
+    displayData.remote.connected = rData.connected;
+    displayData.remote.currentTime = cData.currentTime;
+    displayData.remote.timeMining = rData.timeMining;
+  }
+
   // Global screen data
   displayData.global.btcPrice = coinData.btcPrice;
   displayData.global.currentTime = coinData.currentTime;
   displayData.global.halfHourFee = coinData.halfHourFee;
-  displayData.global.networkDifficulty = coinData.netwrokDifficulty;
+  displayData.global.networkDifficulty = coinData.networkDifficulty;
   displayData.global.globalHashRate = coinData.globalHashRate;
   displayData.global.remainingBlocks = coinData.remainingBlocks;
   displayData.global.blockHeight = coinData.blockHeight;
@@ -342,7 +361,7 @@ void drawMiningScreen(unsigned long mElapsed) {
     background.pushImage(0, -90, MinerWidth, MinerHeight, MinerScreen);
     
     // Hashrate display
-    render.setFontSize(35);
+    render.setFontSize(30);
     render.setFontColor(TFT_BLACK);
     render.rdrawString(data.currentHashRate.c_str(), 118, 114-90, TFT_BLACK);
     
@@ -406,6 +425,95 @@ void drawClockScreen(unsigned long mElapsed) {
     background.drawString(data.currentTime.c_str(), 0, 50, GFXFF);
     
     background.pushSprite(130, 3);
+    background.deleteSprite();
+  }
+}
+
+void drawRemoteScreen(unsigned long mElapsed) {
+  static unsigned long lastUpdate = 0;
+  unsigned long currentMillis = millis();
+  
+  if (!hasChangedScreen && currentMillis - lastUpdate < 5000) return;
+  lastUpdate = currentMillis;
+  
+  updateDisplayData(mElapsed);
+  
+  if (hasChangedScreen) {
+    tft.fillScreen(TFT_BLACK);
+    tft.pushImage(0, 0, initWidth, initHeight, MinerScreen);
+  }
+  
+  printPoolData();
+  hasChangedScreen = false;
+  
+  const RemoteScreenData &data = displayData.remote;
+  
+  if (!data.connected) {
+      if (createBackgroundSprite(320, 170)) {
+          background.pushImage(0, 0, initWidth, initHeight, MinerScreen);
+          render.setDrawer(background);
+          render.setFontSize(18);
+          render.setAlignment(Align::TopCenter);
+          render.drawString("Connecting...", 160, 60, TFT_RED);
+          render.setFontSize(12);
+          render.drawString(Settings.RemoteMinerURL.c_str(), 160, 90, TFT_BLACK);
+          background.pushSprite(0, 0);
+          background.deleteSprite();
+      }
+      return;
+  }
+
+  // Create sprite for right side of screen (Stats)
+  int wdtOffset = 190;
+  if (createBackgroundSprite(WIDTH-5, HEIGHT-7)) {
+    background.pushImage(-190, 0, MinerWidth, MinerHeight, MinerScreen);
+    
+    // RSSI (replacing Total Hashes position)
+    render.setFontSize(18);
+    render.rdrawString(data.rssi.c_str(), 268-wdtOffset, 138, TFT_BLACK);
+    
+    // Label (replacing Templates position)
+    render.setAlignment(Align::TopLeft);
+    if (data.board.length() > 0) {
+        render.drawString(data.board.c_str(), 189-wdtOffset, 20, 0xDEDB);
+    } else {
+        render.drawString("Remote", 189-wdtOffset, 20, 0xDEDB);
+    }
+    
+    // Best diff
+    render.drawString(data.bestDiff.c_str(), 189-wdtOffset, 48, 0xDEDB);
+    
+    // Shares
+    render.setFontSize(18);
+    render.drawString(data.shares.c_str(), 189-wdtOffset, 76, 0xDEDB);
+    
+    // Mining time
+    render.setFontSize(14);
+    render.rdrawString(data.timeMining.c_str(), 315-wdtOffset, 104, 0xDEDB);
+    
+    // Valid blocks
+    render.setFontSize(24);
+    render.setAlignment(Align::TopCenter);
+    render.drawString(data.valid.c_str(), 290-wdtOffset, 56, 0xDEDB);
+    
+    // Current time
+    render.setFontSize(10);
+    render.rdrawString(data.currentTime.c_str(), 286-wdtOffset, 1, TFT_BLACK);
+    
+    background.pushSprite(190, 0);
+    background.deleteSprite();
+  }
+  
+  // Create sprite for hashrate (center-left)
+  if (createBackgroundSprite(WIDTH-7, HEIGHT-100)) {
+    background.pushImage(0, -90, MinerWidth, MinerHeight, MinerScreen);
+    
+    // Hashrate display
+    render.setFontSize(30);
+    render.setFontColor(TFT_BLACK);
+    render.rdrawString(data.hashRate.c_str(), 118, 114-90, TFT_BLACK);
+    
+    background.pushSprite(0, 90);
     background.deleteSprite();
   }
 }
@@ -624,6 +732,9 @@ void aamDisplay_AnimateCurrentScreen(unsigned long frame) {
     case SCREEN_BTCPRICE:
       drawBTCPriceScreen(0);
       break;
+    case SCREEN_REMOTE:
+      drawRemoteScreen(0);
+      break;
   }
 }
 
@@ -672,7 +783,8 @@ CyclicScreenFunction aamDisplayCyclicScreens[] = {
     drawMiningScreen,
     drawClockScreen,
     drawGlobalScreen,
-    drawBTCPriceScreen
+    drawBTCPriceScreen,
+    drawRemoteScreen
 };
 
 DisplayDriver aamDisplayDriver = {

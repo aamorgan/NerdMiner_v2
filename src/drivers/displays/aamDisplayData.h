@@ -47,12 +47,25 @@ struct PriceScreenData {
   String btcPrice;
 };
 
+struct RemoteScreenData {
+  String board;
+  String hashRate;
+  String shares;
+  String bestDiff;
+  String valid;
+  String rssi;
+  bool connected;
+  String currentTime;
+  String timeMining;
+};
+
 struct AAMDisplayData {
   PoolFooterData pool;
   MiningScreenData mining;
   ClockScreenData clock;
   GlobalScreenData global;
   PriceScreenData price;
+  RemoteScreenData remote;
 };
 
 void aamDisplay_SetData(const AAMDisplayData &data);

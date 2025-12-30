@@ -7,7 +7,7 @@
 
 // default settings
 #ifndef HAN
-#define DEFAULT_SSID		"YAM--Network_IV_2.4_EXT"
+#define DEFAULT_SSID		"YAM-Network_IV_2.4_EXT"
 #else
 #define DEFAULT_SSID		"HanSoloAP"
 #endif
@@ -16,10 +16,11 @@
 #define DEFAULT_POOLPASS	"x"
 #define DEFAULT_WALLETID	"bc1qmv3jca5dy6fpaq6j9fd6ra8mpjq2khaa5als8d"
 #define DEFAULT_POOLPORT	21496
-#define DEFAULT_TIMEZONE	2
+#define DEFAULT_TIMEZONE	-5
 #define DEFAULT_SAVESTATS	false
 #define DEFAULT_INVERTCOLORS	false
 #define DEFAULT_BRIGHTNESS	250
+#define DEFAULT_REMOTEMINERURL "http://192.168.1.219"
 
 // JSON config files
 #define JSON_CONFIG_FILE	"/config.json"
@@ -35,6 +36,7 @@
 #define JSON_KEY_STATS2NV	"SaveStats"
 #define JSON_KEY_INVCOLOR	"invertColors"
 #define JSON_KEY_BRIGHTNESS	"Brightness"
+#define JSON_KEY_REMOTEMINERURL    "RemoteMinerURL"
 
 // JSON config file SPIFFS (different for backward compatibility with existing devices)
 #define JSON_SPIFFS_KEY_POOLURL		"poolString"
@@ -45,6 +47,7 @@
 #define JSON_SPIFFS_KEY_STATS2NV	"saveStatsToNVS"
 #define JSON_SPIFFS_KEY_INVCOLOR	"invertColors"
 #define JSON_SPIFFS_KEY_BRIGHTNESS	"Brightness"
+#define JSON_SPIFFS_KEY_REMOTEMINERURL "RemoteMinerURL"
 
 // settings
 struct TSettings
@@ -59,6 +62,7 @@ struct TSettings
 	bool saveStats{ DEFAULT_SAVESTATS };
 	bool invertColors{ DEFAULT_INVERTCOLORS };
 	int Brightness{ DEFAULT_BRIGHTNESS };
+	String RemoteMinerURL{ DEFAULT_REMOTEMINERURL };
 };
 
 #endif // _STORAGE_H_

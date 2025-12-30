@@ -67,6 +67,18 @@ typedef struct{
 }global_data;
 
 typedef struct {
+  String board;
+  String timeMining;
+  String hashRate;
+  String shares;
+  String bestDiff;
+  String netDiff;
+  String valid;
+  String rssi;
+  bool connected;
+} remote_data;
+
+typedef struct {
   String completedShares;
   String totalMHashes;
   String totalKHashes;
@@ -110,7 +122,7 @@ typedef struct {
   String economyFee;
   String minimumFee;
 #endif
-  String netwrokDifficulty;
+  String networkDifficulty;
   String globalHashRate;
   String blockHeight;
   float progressPercent;
@@ -129,6 +141,7 @@ mining_data getMiningData(unsigned long mElapsed);
 clock_data getClockData(unsigned long mElapsed);
 coin_data getCoinData(unsigned long mElapsed);
 pool_data getPoolData(void);
+remote_data getRemoteMinerData(void);
 
 clock_data_t getClockData_t(unsigned long mElapsed);
 String getPoolAPIUrl(void);
