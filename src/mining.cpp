@@ -1246,7 +1246,11 @@ void runMonitor(void *name)
       mLastCheck = now_millis;
       last_update_millis = now_millis;
       unsigned long currentKHashes = (Mhashes * 1000) + hashes / 1000;
-      elapsedKHs = currentKHashes - totalKHashes;
+      if (currentKHashes < totalKHashes) {
+        elapsedKHs = 0;
+      } else {
+        elapsedKHs = currentKHashes - totalKHashes;
+      }
       totalKHashes = currentKHashes;
 
       uptime_frac += mElapsed;

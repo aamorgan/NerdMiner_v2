@@ -280,31 +280,36 @@ static uint8_t s_hashrate_recalc = 0;
 
 String getCurrentHashRate(unsigned long mElapsed)
 {
-  double hashrate = (double)elapsedKHs * 1000.0 / (double)mElapsed;
+  if (mElapsed > 0) {
+    double hashrate = (double)elapsedKHs * 1000.0 / (double)mElapsed;
 
-  s_hashrate_summ += hashrate;
-  s_hashrate_avg_list.push_back(hashrate);
-  if (s_hashrate_avg_list.size() > 10)
-  {
-    s_hashrate_summ -= s_hashrate_avg_list.front();
-    s_hashrate_avg_list.pop_front();
+    s_hashrate_summ += hashrate;
+    s_hashrate_avg_list.push_back(hashrate);
+    if (s_hashrate_avg_list.size() > 10)
+    {
+      s_hashrate_summ -= s_hashrate_avg_list.front();
+      s_hashrate_avg_list.pop_front();
+    }
+
+    ++s_hashrate_recalc;
+    if (s_hashrate_recalc == 0)
+    {
+      s_hashrate_summ = 0.0;
+      for (auto itt = s_hashrate_avg_list.begin(); itt != s_hashrate_avg_list.end(); ++itt)
+        s_hashrate_summ += *itt;
+    }
   }
 
-  ++s_hashrate_recalc;
-  if (s_hashrate_recalc == 0)
-  {
-    s_hashrate_summ = 0.0;
-    for (auto itt = s_hashrate_avg_list.begin(); itt != s_hashrate_avg_list.end(); ++itt)
-      s_hashrate_summ += *itt;
-  }
-
-  double avg_hashrate = s_hashrate_summ / (double)s_hashrate_avg_list.size();
+  double avg_hashrate = 0.0;
+  if (!s_hashrate_avg_list.empty())
+    avg_hashrate = s_hashrate_summ / (double)s_hashrate_avg_list.size();
+    
   if (avg_hashrate < 0.0)
     avg_hashrate = 0.0;
 
   if (s_skip_first > 0)
   {
-    s_skip_first--;
+    if (mElapsed > 0) s_skip_first--;
   } else
   {
     if (avg_hashrate > s_top_hashrate)
@@ -356,6 +361,18 @@ mining_data getMiningData(unsigned long mElapsed)
   data.temp = String(temperatureRead(), 0);
   data.currentTime = getTime();
 
+  // Dumpy current data for debugging
+  Serial.println("Mining Data:");
+  Serial.println(" Completed Shares: " + data.completedShares);
+  Serial.println(" Total MHashes: " + data.totalMHashes);
+  Serial.println(" Total KHashes: " + data.totalKHashes);
+  Serial.println(" Current Hash Rate: " + data.currentHashRate);
+  Serial.println(" Templates: " + data.templates);
+  Serial.println(" Best Difficulty: " + data.bestDiff);
+  Serial.println(" Time Mining: " + data.timeMining);
+  Serial.println(" Valids: " + data.valids);
+  Serial.println(" Temp: " + data.temp);
+  Serial.println(" Current Time: " + data.currentTime);
   return data;
 }
 

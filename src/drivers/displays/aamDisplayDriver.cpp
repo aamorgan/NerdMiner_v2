@@ -38,11 +38,15 @@ void testPostSplashDraw() {
 #define HEIGHT 170
 
 // Screen definitions
+#undef SCREEN_MINING
+#undef SCREEN_CLOCK
+#undef SCREEN_GLOBAL
+
 #define SCREEN_MINING   0
-#define SCREEN_CLOCK    1
-#define SCREEN_GLOBAL   2
-#define SCREEN_BTCPRICE 3
-#define SCREEN_REMOTE   4
+#define SCREEN_REMOTE   1
+#define SCREEN_CLOCK    2
+#define SCREEN_GLOBAL   3
+#define SCREEN_BTCPRICE 4
 #define NUM_SCREENS     5
 
 // State variables
@@ -75,36 +79,40 @@ static AAMDisplayData displayData;
 static void updateDisplayData(unsigned long mElapsed)
 {
   // Get real data from monitor functions
-  mining_data mData = getMiningData(mElapsed);
-  clock_data cData = getClockData(mElapsed);
-  coin_data coinData = getCoinData(mElapsed);
-  pool_data poolData = getPoolData();
 
+  pool_data poolData = getPoolData();
+  
   // Pool footer data
   displayData.pool.workersCount = String(poolData.workersCount);
   displayData.pool.workersHash = poolData.workersHash;
   displayData.pool.bestDifficulty = poolData.bestDifficulty;
-
+  
   // Mining screen data
-  displayData.mining.totalMHashes = mData.totalMHashes;
-  displayData.mining.templates = mData.templates;
-  displayData.mining.bestDiff = mData.bestDiff;
-  displayData.mining.completedShares = mData.completedShares;
-  displayData.mining.timeMining = mData.timeMining;
-  displayData.mining.valids = mData.valids;
-  displayData.mining.temp = mData.temp;
-  displayData.mining.currentTime = mData.currentTime;
-  displayData.mining.currentHashRate = mData.currentHashRate;
-
+  if (currentScreen == SCREEN_MINING) {
+    mining_data mData = getMiningData(mElapsed);
+    displayData.mining.totalMHashes = mData.totalMHashes;
+    displayData.mining.templates = mData.templates;
+    displayData.mining.bestDiff = mData.bestDiff;
+    displayData.mining.completedShares = mData.completedShares;
+    displayData.mining.timeMining = mData.timeMining;
+    displayData.mining.valids = mData.valids;
+    displayData.mining.temp = mData.temp;
+    displayData.mining.currentTime = mData.currentTime;
+    displayData.mining.currentHashRate = mData.currentHashRate;
+  }
+  
   // Clock screen data
-  displayData.clock.currentHashRate = cData.currentHashRate;
-  displayData.clock.blockHeight = cData.blockHeight;
-  displayData.clock.btcPrice = cData.btcPrice;
-  displayData.clock.currentTime = cData.currentTime;
-
+  if (currentScreen == SCREEN_CLOCK) {
+    clock_data cData = getClockData(mElapsed);
+    displayData.clock.currentHashRate = cData.currentHashRate;
+    displayData.clock.blockHeight = cData.blockHeight;
+    displayData.clock.btcPrice = cData.btcPrice;
+    displayData.clock.currentTime = cData.currentTime;
+  }
   // Remote screen data
   if (currentScreen == SCREEN_REMOTE) {
     remote_data rData = getRemoteMinerData();
+    clock_data cData = getClockData(mElapsed);
     displayData.remote.board = rData.board;
     displayData.remote.hashRate = rData.hashRate;
     displayData.remote.shares = rData.shares;
@@ -117,20 +125,27 @@ static void updateDisplayData(unsigned long mElapsed)
   }
 
   // Global screen data
-  displayData.global.btcPrice = coinData.btcPrice;
-  displayData.global.currentTime = coinData.currentTime;
-  displayData.global.halfHourFee = coinData.halfHourFee;
-  displayData.global.networkDifficulty = coinData.networkDifficulty;
-  displayData.global.globalHashRate = coinData.globalHashRate;
-  displayData.global.remainingBlocks = coinData.remainingBlocks;
-  displayData.global.blockHeight = coinData.blockHeight;
-  displayData.global.progressPercent = coinData.progressPercent;
+  if(currentScreen == SCREEN_GLOBAL) {
+    coin_data coinData = getCoinData(mElapsed);
+    displayData.global.btcPrice = coinData.btcPrice;
+    displayData.global.currentTime = coinData.currentTime;
+    displayData.global.halfHourFee = coinData.halfHourFee;
+    displayData.global.networkDifficulty = coinData.networkDifficulty;
+    displayData.global.globalHashRate = coinData.globalHashRate;
+    displayData.global.remainingBlocks = coinData.remainingBlocks;
+    displayData.global.blockHeight = coinData.blockHeight;
+    displayData.global.progressPercent = coinData.progressPercent;
+  }
 
   // Price screen data
-  displayData.price.currentHashRate = mData.currentHashRate;
-  displayData.price.blockHeight = cData.blockHeight;
-  displayData.price.currentTime = cData.currentTime;
-  displayData.price.btcPrice = cData.btcPrice;
+  if(currentScreen == SCREEN_BTCPRICE) {
+    mining_data mData = getMiningData(mElapsed);
+    clock_data cData = getClockData(mElapsed);
+    displayData.price.currentHashRate = mData.currentHashRate;
+    displayData.price.blockHeight = cData.blockHeight;
+    displayData.price.currentTime = cData.currentTime;
+    displayData.price.btcPrice = cData.btcPrice;
+  }
 }
 
 void aamDisplay_SetData(const AAMDisplayData &data)
@@ -469,15 +484,21 @@ void drawRemoteScreen(unsigned long mElapsed) {
     background.pushImage(-190, 0, MinerWidth, MinerHeight, MinerScreen);
     
     // RSSI (replacing Total Hashes position)
-    render.setFontSize(18);
-    render.rdrawString(data.rssi.c_str(), 268-wdtOffset, 138, TFT_BLACK);
+    background.setFreeFont(FSSB9);
+    background.setTextSize(1);
+    background.setTextDatum(TR_DATUM);
+    background.setTextColor(TFT_BLACK);
+    background.drawString(data.rssi.c_str(), 268-wdtOffset, 138, GFXFF);
     
     // Label (replacing Templates position)
-    render.setAlignment(Align::TopLeft);
+    background.setFreeFont(FSSB9);
+    background.setTextSize(1);
+    background.setTextDatum(TL_DATUM);
+    background.setTextColor(0xDEDB);
     if (data.board.length() > 0) {
-        render.drawString(data.board.c_str(), 189-wdtOffset, 20, 0xDEDB);
+        background.drawString(data.board.c_str(), 189-wdtOffset, 20, GFXFF);
     } else {
-        render.drawString("Remote", 189-wdtOffset, 20, 0xDEDB);
+        background.drawString("Remote", 189-wdtOffset, 20, GFXFF);
     }
     
     // Best diff
@@ -781,10 +802,10 @@ void aamDisplay_DoLedStuff(unsigned long frame) {
 // to satisfy the struct definition.
 CyclicScreenFunction aamDisplayCyclicScreens[] = {
     drawMiningScreen,
+    drawRemoteScreen,
     drawClockScreen,
     drawGlobalScreen,
-    drawBTCPriceScreen,
-    drawRemoteScreen
+    drawBTCPriceScreen
 };
 
 DisplayDriver aamDisplayDriver = {
