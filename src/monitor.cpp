@@ -603,7 +603,7 @@ remote_data getRemoteMinerData(void) {
                 if (isdigit(hr[i]) || hr[i] == '.') numStr += hr[i];
                 else break;
             }
-            if (numStr.length() > 0) data.hashRate = String((int)ceil(numStr.toFloat()));
+            if (numStr.length() > 0) data.hashRate = String(numStr.toFloat(), 1);
             else data.hashRate = hr;
 
             // Shares: extract valid shares (before /)
