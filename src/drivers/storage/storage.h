@@ -7,15 +7,17 @@
 
 // default settings
 #ifndef HAN
-#define DEFAULT_SSID		"YAM-Network_IV_2.4_EXT"
+#define DEFAULT_SSID		"YAM-Network_IV_2.4G_EXT"
 #else
 #define DEFAULT_SSID		"HanSoloAP"
 #endif
 #define DEFAULT_WIFIPW		"Enn0vyAshaleaYl1shaa"
-#define DEFAULT_POOLURL		"public-pool.io"
+#define DEFAULT_POOLURL		"pool.nerdminer.io"
+#define DEFAULT_POOLURL_BKP	"public-pool.io"
 #define DEFAULT_POOLPASS	"x"
 #define DEFAULT_WALLETID	"bc1qmv3jca5dy6fpaq6j9fd6ra8mpjq2khaa5als8d"
-#define DEFAULT_POOLPORT	21496
+#define DEFAULT_POOLPORT	3333
+#define DEFAULT_POOLPORT_Bkp	21496
 #define DEFAULT_TIMEZONE	-5
 #define DEFAULT_SAVESTATS	false
 #define DEFAULT_INVERTCOLORS	false

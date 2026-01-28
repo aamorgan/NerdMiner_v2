@@ -122,6 +122,7 @@ static void updateDisplayData(unsigned long mElapsed)
     displayData.remote.connected = rData.connected;
     displayData.remote.currentTime = cData.currentTime;
     displayData.remote.timeMining = rData.timeMining;
+    displayData.remote.pool = rData.pool;
   }
 
   // Global screen data

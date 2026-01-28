@@ -75,6 +75,7 @@ typedef struct {
   String netDiff;
   String valid;
   String rssi;
+  String pool;
   bool connected;
 } remote_data;
 

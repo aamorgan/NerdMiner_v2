@@ -615,6 +615,7 @@ remote_data getRemoteMinerData(void) {
             data.bestDiff = doc["bestDiff"].as<String>();
             data.valid = doc["valid"].as<String>();
             data.rssi = doc["rssi"].as<String>();
+            data.pool = doc["pool"].as<String>();
             data.timeMining = doc["timeMining"].as<String>();
             data.netDiff = doc["netDiff"].as<String>();
         } else {

@@ -57,6 +57,7 @@ struct RemoteScreenData {
   bool connected;
   String currentTime;
   String timeMining;
+  String pool;
 };
 
 struct AAMDisplayData {
