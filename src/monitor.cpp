@@ -592,32 +592,50 @@ remote_data getRemoteMinerData(void) {
         if (!error) {
             data.connected = true;
             
-            // Board type
-            if (doc.containsKey("boardtype")) data.board = doc["boardtype"].as<String>();
-            else if (doc.containsKey("board")) data.board = doc["board"].as<String>();
+            // Version as board identifier
+            if (doc.containsKey("version")) data.board = doc["version"].as<String>();
             
-            // Hashrate: remove units and round up
-            String hr = doc["hashRate"].as<String>();
-            String numStr = "";
-            for(unsigned int i=0; i<hr.length(); i++) {
-                if (isdigit(hr[i]) || hr[i] == '.') numStr += hr[i];
-                else break;
+            // Hashrate in kH/s
+            if (doc.containsKey("hashrate_khs")) {
+                data.hashRate = doc["hashrate_khs"].as<String>();
             }
-            if (numStr.length() > 0) data.hashRate = String(numStr.toFloat(), 1);
-            else data.hashRate = hr;
 
-            // Shares: extract valid shares (before /)
-            String sh = doc["shares"].as<String>();
-            int slashIdx = sh.indexOf('/');
-            if (slashIdx > 0) data.shares = sh.substring(0, slashIdx);
-            else data.shares = sh;
+            // Shares (now a number)
+            if (doc.containsKey("shares")) {
+                data.shares = String(doc["shares"].as<int>());
+            }
 
-            data.bestDiff = doc["bestDiff"].as<String>();
-            data.valid = doc["valid"].as<String>();
-            data.rssi = doc["rssi"].as<String>();
-            data.pool = doc["pool"].as<String>();
-            data.timeMining = doc["timeMining"].as<String>();
-            data.netDiff = doc["netDiff"].as<String>();
+            // Best difficulty
+            if (doc.containsKey("best_difficulty")) {
+                data.bestDiff = doc["best_difficulty"].as<String>();
+            }
+
+            // Valid blocks
+            if (doc.containsKey("valid_blocks")) {
+                data.valid = String(doc["valid_blocks"].as<int>());
+            }
+
+            // Pool is now an object with address and port
+            if (doc.containsKey("pool") && doc["pool"].is<JsonObject>()) {
+                String poolAddr = doc["pool"]["address"].as<String>();
+                int poolPort = doc["pool"]["port"].as<int>();
+                data.pool = poolAddr + ":" + String(poolPort);
+            }
+
+            // Uptime string
+            if (doc.containsKey("uptime")) {
+                data.timeMining = doc["uptime"].as<String>();
+            }
+
+            // Temperature (store as string for display)
+            if (doc.containsKey("temperature_c")) {
+                data.rssi = String(doc["temperature_c"].as<float>(), 1) + "C";
+            }
+
+            // Total MHashes as net diff substitute
+            if (doc.containsKey("total_mhashes")) {
+                data.netDiff = String(doc["total_mhashes"].as<int>()) + " MH";
+            }
         } else {
             Serial.print("[Remote] JSON Error: ");
             Serial.println(error.c_str());
